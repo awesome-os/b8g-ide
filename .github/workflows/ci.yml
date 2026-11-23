@@ -1,0 +1,47 @@
+name: CI — B8G IDE (WebRenderer + b8g-devplane Extension)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      baseline_tag:
+        description: 'Sectium Browser baseline tag'
+        required: true
+        default: 'v0.5.0-baseline'
+
+jobs:
+  verify-b8g-ide:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run B8G IDE & b8g-devplane Extension Test Suite
+        run: node --test b8g-ide.test.mts
+
+      - name: Verify Sectium WebRenderer Baseline Contract (Lumi White Dragon)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_TAG: ${{ inputs.baseline_tag || 'v0.5.0-baseline' }}
+        run: |
+          mkdir -p .baseline
+          gh release download "$BASELINE_TAG" \
+            --repo awesome-os/sectium-browser \
+            --pattern "RollingReleaseManifest.json" \
+            --pattern "lumi-white-dragon.ico" \
+            --pattern "libsectium_display.dll" \
+            --dir .baseline --clobber
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('.baseline/RollingReleaseManifest.json', 'utf8'));
+            if (m.brand.mascot !== 'Lumi White Dragon') throw new Error('Expected Lumi White Dragon');
+            console.log('[b8g-ide] Bound to', m.baseline_tag, 'with', m.components.length, 'verified components');
+          "
+          tar -czf b8g-devplane-extension.tar.gz extensions/b8g-devplane devplane host
+      - uses: actions/upload-artifact@v4
+        with:
+          name: b8g-devplane-extension
+          path: b8g-devplane-extension.tar.gz
