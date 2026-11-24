@@ -22,23 +22,23 @@ jobs:
       - name: Run B8G IDE & b8g-devplane Extension Test Suite
         run: node --test b8g-ide.test.mts
 
-      - name: Verify Sectium WebRenderer Baseline Contract (Lumi White Dragon)
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BASELINE_TAG: ${{ inputs.baseline_tag || 'v0.5.0-baseline' }}
+      - name: Hydrate & Verify Sectium Display + Shim Directly from Canonical O(1) Ghost CAS (cas-v1)
         run: |
-          mkdir -p .baseline
-          gh release download "$BASELINE_TAG" \
-            --repo awesome-os/sectium-browser \
-            --pattern "RollingReleaseManifest.json" \
-            --pattern "lumi-white-dragon.ico" \
-            --pattern "libsectium_display.dll" \
-            --dir .baseline --clobber
           node -e "
-            const fs = require('fs');
-            const m = JSON.parse(fs.readFileSync('.baseline/RollingReleaseManifest.json', 'utf8'));
-            if (m.brand.mascot !== 'Lumi White Dragon') throw new Error('Expected Lumi White Dragon');
-            console.log('[b8g-ide] Bound to', m.baseline_tag, 'with', m.components.length, 'verified components');
+            const crypto = require('crypto');
+            const INDEX_URL = 'https://raw.githubusercontent.com/awesome-os/b8g-ghost/main/manifests/index.json';
+            (async () => {
+              const idx = await (await fetch(INDEX_URL)).json();
+              console.log('[b8g-ide] Connected to Ghost CAS:', idx.schema, 'entries=' + idx.total_entries);
+              for (const f of ['lumi-white-dragon.ico', 'libsectium_display-linux-x64.so', 'b8g-shim-linux-x64']) {
+                const entry = idx.entries[f];
+                if (!entry) throw new Error('Missing ' + f + ' in canonical Ghost CAS index');
+                const buf = Buffer.from(await (await fetch(entry.download_url)).arrayBuffer());
+                const hash = crypto.createHash('sha256').update(buf).digest('hex');
+                if (hash !== entry.sha256) throw new Error('SHA-256 mismatch for ' + f);
+                console.log('[CAS-VERIFIED]', f, buf.length, 'bytes, sha256=' + hash.slice(0, 16) + '...');
+              }
+            })();
           "
           tar -czf b8g-devplane-extension.tar.gz extensions/b8g-devplane devplane host
       - uses: actions/upload-artifact@v4
