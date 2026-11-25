@@ -27,9 +27,9 @@ BSD-3-Clause — Awesome-OS Contributors.
 ## Quick Install & Run (Windows / Linux / macOS)
 
 ```sh
-# Download latest release assets (all platforms)
-gh release download -R awesome-os/b8g-ide --dir ./b8g-ide-release
+# Install / hydrate from v11 CAS via holo-pm
+holo-pm install repository://github.com/awesome-os/b8g-ide@main
 
-# Or clone source directly (all platforms)
-git clone https://github.com/awesome-os/b8g-ide.git && cd b8g-ide
+# Or project & run directly via holo-project (0-byte hardlink)
+holo-project "project://cpp/b8g-ide?from=repository://github.com/awesome-os/b8g-ide@main"
 ```
