@@ -1,3 +1,5 @@
+> [!NOTE] Consolidated into the unified Holo v11 OS monorepo at https://github.com/awesome-os/awesome-os
+
 # B8G IDE (`awesome-os/b8g-ide`)
 
 **Zero-Electron VS Code OSS running on the Sectium WebRenderer (`sectium-browser @ v0.5.0-baseline`), with all missing desktop capabilities supplied by the `b8g-devplane` VS Code Extension.**
